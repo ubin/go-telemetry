@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/ubin/go-telemetry/telemetry/config"
 	"github.com/ubin/go-telemetry/telemetry/provider/sentry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -38,7 +39,7 @@ func (h *OtelHandler) Handle(ctx context.Context, r slog.Record) error {
 	}
 
 	// if h.otelCfg.ExporterType == config.ExporterTypeSentry {
-	if h.otelProvider == "sentry" {
+	if h.otelProvider == string(config.ExporterTypeSentry) {
 		// Send logs as messages to Sentry
 		sentry.CaptureLogMessage(r)
 	}

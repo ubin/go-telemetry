@@ -6,31 +6,21 @@ import (
 	"log"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/ubin/go-telemetry/telemetry"
 	"github.com/ubin/go-telemetry/telemetry/config"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/sdk/trace"
 )
-
-// WithOpenTracing will initialize the order status sync cron job
-func WithOpenTracing(cfg config.Config) (*trace.TracerProvider, error) {
-	if !cfg.IsEnabled() {
-		// logger.Log.Info("tracing is disabled")
-		return nil, nil
-	}
-	// logger.Log.Info("initializing otel exporter")
-	return telemetry.InitTracer(cfg)
-}
 
 func main() {
 	ctx := context.Background()
 
 	cfg := config.TracingConfig{
 		ServiceName:       "example-service",
-		Environment:       "",
+		Environment:       "test",
 		Enabled:           true,
 		ExporterType:      config.ExporterTypeSentry,
-		CollectorEndpoint: "https://b64c5ffa046cfd0307594efe3ceccec6@o355784.ingest.us.sentry.io/4508456234254336",
+		CollectorEndpoint: "",
 		Insecure:          true,
 		DebugMode:         true,
 	}
@@ -44,11 +34,22 @@ func main() {
 		}
 	}()
 
-	tracer := otel.Tracer("example-tracer1")
-	ctx, span := tracer.Start(context.Background(), "example-span1")
-	time.Sleep(2 * time.Second) // Simulating work
-	span.AddEvent("Processing completed1")
-	span.End()
+	tracer := otel.Tracer("example-tracer")
+	ctx, span := tracer.Start(context.Background(), "example-span")
+	defer span.End()
+
+	// Simulate work
+	time.Sleep(2 * time.Second)
+	span.AddEvent("Processing completed")
+	sentry.CaptureMessage("Test message")
+
+	// Simulate an error
+	err = fmt.Errorf("simulated error for demonstration purposes")
+	if err != nil {
+		span.RecordError(err)
+		sentry.CaptureException(err)
+		log.Printf("error occurred: %v", err)
+	}
 
 	fmt.Println("Trace completed")
 

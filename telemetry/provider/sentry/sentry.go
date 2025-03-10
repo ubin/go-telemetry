@@ -7,8 +7,15 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 )
 
+type Sentry struct {
+	cfg config.Config
+}
+
 // InitSentry initializes Sentry for error monitoring
-func Init(cfg config.Config) error {
+func New(cfg config.Config) (*Sentry, error) {
+	s := Sentry{
+		cfg: cfg,
+	}
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:              cfg.GetCollectorEndpoint(),
 		EnableTracing:    cfg.IsInsecure(),
@@ -17,14 +24,15 @@ func Init(cfg config.Config) error {
 		Debug:            cfg.IsDebugMode(),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &s, nil
 }
 
-func TracerProvider() *trace.TracerProvider {
+func (s *Sentry) TracerProvider() *trace.TracerProvider {
 	tracerProvider := trace.NewTracerProvider(
 		trace.WithSpanProcessor(sentryotel.NewSentrySpanProcessor()),
 	)
+
 	return tracerProvider
 }

@@ -17,8 +17,6 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
-
-	sentryotel "github.com/getsentry/sentry-go/otel"
 )
 
 // InitTracer initializes OpenTelemetry tracing with configurable exporters.
@@ -33,13 +31,11 @@ func InitTracer(cfg config.Config) (*trace.TracerProvider, error) {
 	switch cfg.GetExporterType() {
 	case config.ExporterTypeSentry:
 		//initialize sentry sdk
-		err = sentry.Init(cfg)
+		s, err := sentry.New(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("sentry initialization failed: %w", err)
 		}
-		tracerProvider := trace.NewTracerProvider(
-			trace.WithSpanProcessor(sentryotel.NewSentrySpanProcessor()),
-		)
+		tracerProvider := s.TracerProvider()
 		otel.SetTracerProvider(tracerProvider)
 		return tracerProvider, nil
 
